@@ -17,3 +17,21 @@ services:
       - '$GITLAB_HOME/logs:/var/log/gitlab'
       - '$GITLAB_HOME/data:/var/opt/gitlab'
     shm_size: '256m'
+
+  gitlab-runner:
+    image: gitlab/gitlab-runner:latest
+    container_name: gitlab-runner
+    restart: always
+    volumes:
+      - '$GITLAB_HOME/gitlab-runner/config:/etc/gitlab-runner'
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - GITLAB_RUNNER_DISABLE_HELP=1
+    depends_on:
+      - gitlab
+    networks:
+      - gitlab-network
+
+networks:
+  gitlab-network:
+    driver: bridge
