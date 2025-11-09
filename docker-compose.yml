@@ -8,6 +8,12 @@ services:
       GITLAB_OMNIBUS_CONFIG: |
         # Add any other gitlab.rb configuration here, each on its own line
         external_url 'https://gitlab.example.com'
+      HTTP_PROXY: ${HTTP_PROXY}
+      HTTPS_PROXY: ${HTTPS_PROXY}
+      http_proxy: ${http_proxy}
+      https_proxy: ${https_proxy}
+      NO_PROXY: ${NO_PROXY}
+      no_proxy: ${no_proxy}
     ports:
       - '80:80'
       - '443:443'
@@ -27,6 +33,12 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - GITLAB_RUNNER_DISABLE_HELP=1
+      - HTTP_PROXY=${HTTP_PROXY}
+      - HTTPS_PROXY=${HTTPS_PROXY}
+      - http_proxy=${http_proxy}
+      - https_proxy=${https_proxy}
+      - NO_PROXY=${NO_PROXY}
+      - no_proxy=${no_proxy}
     depends_on:
       - gitlab
     networks:
