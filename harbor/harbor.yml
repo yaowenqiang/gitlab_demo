@@ -1,0 +1,84 @@
+# Harbor 配置文件
+
+# 外部访问 URL
+external_url: http://localhost:8080
+
+# HTTP 端口
+http:
+  port: 80
+
+# HTTPS 端口（可选）
+# https:
+#   port: 443
+#   certificate: /your/certificate/path
+#   private_key: /your/private/key/path
+
+# 管理员密码
+harbor_admin_password: Harbor12345
+
+# 数据库配置
+database:
+  password: root123
+  max_idle_conns: 50
+  max_open_conns: 1000
+
+# Redis 配置
+redis:
+  # Redis 主机地址
+  host: harbor-redis
+  # Redis 端口
+  port: 6379
+  # Redis 密码
+  password: ""
+  # Redis 数据库索引
+  db_index: 1
+  # Redis 连接超时时间
+  max_idle_conns: 50
+  # Redis 连接池最大连接数
+  max_open_conns: 1000
+
+# 日志配置
+log:
+  level: info
+  local:
+    rotate_count: 50
+    rotate_size: 200M
+    location: /var/log/harbor
+
+# 项目创建限制
+project_creation_restriction: everyone
+
+# 验证远程证书
+verify_remote_cert: false
+
+# 最大作业工作者
+max_job_workers: 10
+
+# 令牌服务设置
+token_expiration: 30
+
+# Webhook 配置
+webhook:
+  http_timeout: 1000
+  job_webhook_retry: 3
+
+# Chart 存储配置
+chart:
+  absolute_url: disabled
+
+# Clair 配置（漏洞扫描）
+clair:
+  updaters_interval: 12
+
+# Trivy 配置（漏洞扫描）
+trivy:
+  ignore_unfixed: false
+  skip_update: false
+  offline_scan: false
+  security_update_interval: 24
+
+# 机器人令牌过期时间
+robot_token_expiration: 24
+
+# 机器人令牌前缀
+robot_name_prefix: robot$

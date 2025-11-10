@@ -1,0 +1,7 @@
+# Docker Registry GitLab CI/CD 配置
+HARBOR_URL=localhost:8080
+HARBOR_USERNAME=gitlab
+HARBOR_PASSWORD=registry123
+
+# 完整镜像地址格式
+# localhost:8080/your-app-name:tag

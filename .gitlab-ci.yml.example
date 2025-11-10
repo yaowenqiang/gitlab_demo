@@ -1,0 +1,113 @@
+# GitLab CI/CD 示例配置文件
+# 将此文件复制到您的项目根目录并重命名为 .gitlab-ci.yml
+
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  # Harbor 配置 (需要在 GitLab 项目设置中添加这些 CI/CD 变量)
+  HARBOR_URL: $HARBOR_URL
+  HARBOR_PROJECT: $HARBOR_PROJECT
+  HARBOR_USERNAME: $HARBOR_USERNAME
+  HARBOR_PASSWORD: $HARBOR_PASSWORD
+
+  # Docker 镜像名称
+  IMAGE_NAME: "$HARBOR_URL/$HARBOR_PROJECT/my-app"
+  IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+
+# 构建阶段
+build_image:
+  stage: build
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - echo "登录到 Harbor 私服..."
+    - echo $HARBOR_PASSWORD | docker login $HARBOR_URL -u $HARBOR_USERNAME --password-stdin
+  script:
+    - echo "构建 Docker 镜像..."
+    - docker build -t $IMAGE_NAME:$IMAGE_TAG .
+    - docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
+    - echo "推送镜像到 Harbor..."
+    - docker push $IMAGE_NAME:$IMAGE_TAG
+    - docker push $IMAGE_NAME:latest
+    - echo "镜像推送完成"
+  after_script:
+    - docker logout $HARBOR_URL
+  only:
+    - main
+    - develop
+
+# 测试阶段
+test_image:
+  stage: test
+  image: $IMAGE_NAME:$IMAGE_TAG
+  script:
+    - echo "运行容器测试..."
+    # 在这里添加您的测试命令
+    # 例如：npm test, pytest, 等
+    - echo "测试完成"
+  dependencies:
+    - build_image
+  only:
+    - main
+    - develop
+
+# 部署到开发环境
+deploy_dev:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache curl
+  script:
+    - echo "部署到开发环境..."
+    - echo "使用镜像: $IMAGE_NAME:$IMAGE_TAG"
+    # 在这里添加您的部署脚本
+    # 例如：kubectl apply, docker-compose, 等
+    - echo "开发环境部署完成"
+  environment:
+    name: development
+    url: http://dev.example.com
+  dependencies:
+    - test_image
+  only:
+    - develop
+
+# 部署到生产环境
+deploy_prod:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache curl
+  script:
+    - echo "部署到生产环境..."
+    - echo "使用镜像: $IMAGE_NAME:$IMAGE_TAG"
+    # 在这里添加您的生产部署脚本
+    - echo "生产环境部署完成"
+  environment:
+    name: production
+    url: http://example.com
+  dependencies:
+    - test_image
+  when: manual
+  only:
+    - main
+
+# 清理旧镜像 (可选)
+cleanup:
+  stage: .post
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  script:
+    - echo "清理旧镜像..."
+    # 可以添加清理脚本来删除旧的镜像标签
+    - echo "清理完成"
+  when: always
+  allow_failure: true

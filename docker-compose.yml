@@ -44,6 +44,45 @@ services:
     networks:
       - gitlab-network
 
+  harbor:
+    image: registry:2.8
+    container_name: harbor
+    restart: always
+    ports:
+      - '5000:5000'
+    volumes:
+      - '$GITLAB_HOME/harbor/data:/var/lib/registry'
+    environment:
+      - HTTP_PROXY=${HTTP_PROXY}
+      - HTTPS_PROXY=${HTTPS_PROXY}
+      - http_proxy=${http_proxy}
+      - https_proxy=${https_proxy}
+      - NO_PROXY=${NO_PROXY}
+      - no_proxy=${no_proxy}
+    networks:
+      - gitlab-network
+
+  harbor-ui:
+    image: hyper/docker-registry-web:latest
+    container_name: harbor-ui
+    restart: always
+    ports:
+      - '8080:5000'
+    environment:
+      - REGISTRY_URL=http://harbor:5000
+      - REGISTRY_NAME=Docker Registry
+      - REGISTRY_READONLY=false
+      - HTTP_PROXY=${HTTP_PROXY}
+      - HTTPS_PROXY=${HTTPS_PROXY}
+      - http_proxy=${http_proxy}
+      - https_proxy=${https_proxy}
+      - NO_PROXY=${NO_PROXY}
+      - no_proxy=${no_proxy}
+    networks:
+      - gitlab-network
+    depends_on:
+      - harbor
+
 networks:
   gitlab-network:
     driver: bridge

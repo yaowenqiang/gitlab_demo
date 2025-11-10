@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  harbor-ui:
+    image: joxit/docker-registry-ui:main
+    container_name: harbor-ui
+    restart: always
+    ports:
+      - '8081:80'
+    environment:
+      - REGISTRY_URL=http://harbor:5000
+      - REGISTRY_TITLE=Docker Registry
+      - DELETE_IMAGES=true
+      - SHOW_CONTENT_DIGEST=true
+      - NGINX_PROXY_PASS_URL=http://harbor:5000
+      - HTTP_PROXY=${HTTP_PROXY}
+      - HTTPS_PROXY=${HTTPS_PROXY}
+      - http_proxy=${http_proxy}
+      - https_proxy=${https_proxy}
+      - NO_PROXY=${NO_PROXY}
+      - no_proxy=${no_proxy}
+    networks:
+      - gitlab-network
+    depends_on:
+      - harbor
+
+networks:
+  gitlab-network:
+    external: true

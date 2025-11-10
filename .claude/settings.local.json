@@ -3,7 +3,20 @@
     "allow": [
       "Bash(docker-compose logs:*)",
       "Bash(docker-compose restart:*)",
-      "Bash(docker exec:*)"
+      "Bash(docker exec:*)",
+      "Bash(chmod:*)",
+      "Bash(docker-compose config:*)",
+      "Bash(./harbor-manager.sh:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(./setup-harbor.sh:*)",
+      "Bash(docker run:*)",
+      "Bash($GITLAB_HOME/harbor/auth/htpasswd)",
+      "Bash(curl:*)",
+      "Bash(docker pull:*)",
+      "Bash(docker tag:*)",
+      "Bash(docker push:*)",
+      "Bash(docker-compose stop:*)",
+      "Bash(docker-compose rm:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,0 +1,143 @@
+version: '3.8'
+
+services:
+  harbor-portal:
+    image: goharbor/harbor-portal:v2.8.0
+    container_name: harbor-portal
+    restart: always
+    networks:
+      - harbor-network
+    environment:
+      - HTTP_PROXY=${HTTP_PROXY}
+      - HTTPS_PROXY=${HTTPS_PROXY}
+      - http_proxy=${http_proxy}
+      - https_proxy=${https_proxy}
+      - NO_PROXY=${NO_PROXY}
+      - no_proxy=${no_proxy}
+
+  harbor-core:
+    image: goharbor/harbor-core:v2.8.0
+    container_name: harbor-core
+    restart: always
+    networks:
+      - harbor-network
+    environment:
+      - HTTP_PROXY=${HTTP_PROXY}
+      - HTTPS_PROXY=${HTTPS_PROXY}
+      - http_proxy=${http_proxy}
+      - https_proxy=${https_proxy}
+      - NO_PROXY=${NO_PROXY}
+      - no_proxy=${no_proxy}
+    volumes:
+      - '$GITLAB_HOME/harbor/data:/data'
+      - '$GITLAB_HOME/harbor/common:/etc/core/common'
+      - '$GITLAB_HOME/harbor/secret:/etc/core/secret'
+
+  harbor-jobservice:
+    image: goharbor/harbor-jobservice:v2.8.0
+    container_name: harbor-jobservice
+    restart: always
+    networks:
+      - harbor-network
+    environment:
+      - HTTP_PROXY=${HTTP_PROXY}
+      - HTTPS_PROXY=${HTTPS_PROXY}
+      - http_proxy=${http_proxy}
+      - https_proxy=${https_proxy}
+      - NO_PROXY=${NO_PROXY}
+      - no_proxy=${no_proxy}
+    volumes:
+      - '$GITLAB_HOME/harbor/data:/data'
+
+  harbor-db:
+    image: goharbor/harbor-db:v2.8.0
+    container_name: harbor-db
+    restart: always
+    networks:
+      - harbor-network
+    environment:
+      - HTTP_PROXY=${HTTP_PROXY}
+      - HTTPS_PROXY=${HTTPS_PROXY}
+      - http_proxy=${http_proxy}
+      - https_proxy=${https_proxy}
+      - NO_PROXY=${NO_PROXY}
+      - no_proxy=${no_proxy}
+    volumes:
+      - '$GITLAB_HOME/harbor/data/database:/var/lib/postgresql/data'
+
+  harbor-registry:
+    image: goharbor/registry-photon:v2.8.0
+    container_name: harbor-registry
+    restart: always
+    networks:
+      - harbor-network
+    environment:
+      - HTTP_PROXY=${HTTP_PROXY}
+      - HTTPS_PROXY=${HTTPS_PROXY}
+      - http_proxy=${http_proxy}
+      - https_proxy=${https_proxy}
+      - NO_PROXY=${NO_PROXY}
+      - no_proxy=${no_proxy}
+    volumes:
+      - '$GITLAB_HOME/harbor/data/registry:/storage'
+      - '$GITLAB_HOME/harbor/common:/etc/registry/common'
+
+  harbor-registryctl:
+    image: goharbor/harbor-registryctl:v2.8.0
+    container_name: harbor-registryctl
+    restart: always
+    networks:
+      - harbor-network
+    environment:
+      - HTTP_PROXY=${HTTP_PROXY}
+      - HTTPS_PROXY=${HTTPS_PROXY}
+      - http_proxy=${http_proxy}
+      - https_proxy=${https_proxy}
+      - NO_PROXY=${NO_PROXY}
+      - no_proxy=${no_proxy}
+    volumes:
+      - '$GITLAB_HOME/harbor/data/registry:/storage'
+      - '$GITLAB_HOME/harbor/common:/etc/registry/common'
+    depends_on:
+      - harbor-registry
+
+  harbor-nginx:
+    image: goharbor/nginx-photon:v2.8.0
+    container_name: harbor-nginx
+    restart: always
+    ports:
+      - '8080:80'
+      - '8443:443'
+    networks:
+      - harbor-network
+    environment:
+      - HTTP_PROXY=${HTTP_PROXY}
+      - HTTPS_PROXY=${HTTPS_PROXY}
+      - http_proxy=${http_proxy}
+      - https_proxy=${https_proxy}
+      - NO_PROXY=${NO_PROXY}
+      - no_proxy=${no_proxy}
+    volumes:
+      - '$GITLAB_HOME/harbor/data/registry:/storage'
+      - '$GITLAB_HOME/harbor/common:/etc/registry/common'
+      - '$GITLAB_HOME/harbor/nginx:/etc/nginx'
+
+  harbor-redis:
+    image: goharbor/redis-photon:v2.8.0
+    container_name: harbor-redis
+    restart: always
+    networks:
+      - harbor-network
+    environment:
+      - HTTP_PROXY=${HTTP_PROXY}
+      - HTTPS_PROXY=${HTTPS_PROXY}
+      - http_proxy=${http_proxy}
+      - https_proxy=${https_proxy}
+      - NO_PROXY=${NO_PROXY}
+      - no_proxy=${no_proxy}
+    volumes:
+      - '$GITLAB_HOME/harbor/data/redis:/data'
+
+networks:
+  harbor-network:
+    driver: bridge
