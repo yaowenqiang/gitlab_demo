@@ -1,0 +1,36 @@
+services:
+  # Traefik reverse proxy
+  traefik:
+    image: traefik:v2.10
+    platform: linux/arm64
+    container_name: traefik
+    restart: always
+    command:
+      - --api.dashboard=true
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=gitlab-network
+      - --entrypoints.web.address=:80
+      - --log.level=INFO
+      - --accesslog=true
+      - --ping=true
+      - --ping.entrypoint=web
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./data/traefik/logs:/var/log/traefik
+    networks:
+      - gitlab-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.example.com`)"
+      - "traefik.http.routers.traefik.entrypoints=web"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+
+networks:
+  gitlab-network:
+    driver: bridge

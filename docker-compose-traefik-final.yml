@@ -1,0 +1,72 @@
+services:
+  # Traefik reverse proxy
+  traefik:
+    image: traefik:v2.10
+    platform: linux/arm64
+    container_name: traefik
+    restart: always
+    command:
+      - --api.dashboard=true
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --log.level=INFO
+      - --accesslog=true
+    ports:
+      - "80:80"
+      - "8080:8080"  # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.traefik.entrypoints=web"
+      - "traefik.http.routers.traefik.service=api@internal"
+
+  # Hello World 应用
+  hello-world:
+    image: 9a8c8a75c39e3dc1ed1d2f05ddff5b8b0f8315f95bc7cda59523aa748281e244
+    container_name: hello-test-2
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hello-world.rule=Host(`hello.localhost`) || Host(`api.localhost`)"
+      - "traefik.http.routers.hello-world.entrypoints=web"
+      - "traefik.http.services.hello-world.loadbalancer.server.port=5000"
+
+  # Docker Registry 服务
+  registry:
+    image: registry:2
+    platform: linux/arm64
+    container_name: registry
+    restart: always
+    environment:
+      - REGISTRY_STORAGE_DELETE_ENABLED=true
+    volumes:
+      - ./data/registry:/var/lib/registry
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.registry-api.rule=Host(`registry.localhost`) && PathPrefix(`/v2/`)"
+      - "traefik.http.routers.registry-api.entrypoints=web"
+      - "traefik.http.services.registry.loadbalancer.server.port=5000"
+
+  # Registry UI
+  registry-ui:
+    image: joxit/docker-registry-ui:latest
+    platform: linux/arm64
+    container_name: registry-ui
+    restart: always
+    environment:
+      - REGISTRY_TITLE=Docker Registry
+      - REGISTRY_URL=http://registry:5000
+      - DELETE_IMAGES=true
+      - SINGLE_REGISTRY=true
+      - SHOW_CONTENT_DIGEST=true
+    depends_on:
+      - registry
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.registry-ui.rule=Host(`registry.localhost`)"
+      - "traefik.http.routers.registry-ui.entrypoints=web"
+      - "traefik.http.services.registry-ui.loadbalancer.server.port=80"

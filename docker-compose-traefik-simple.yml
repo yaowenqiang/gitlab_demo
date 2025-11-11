@@ -1,0 +1,94 @@
+services:
+  # Traefik reverse proxy
+  traefik:
+    image: traefik:v2.10
+    platform: linux/arm64
+    container_name: traefik
+    restart: always
+    command:
+      - --api.dashboard=true
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=gitlab-network
+      - --providers.file.filename=/etc/traefik/traefik.yml
+      - --providers.file.watch=true
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --log.level=INFO
+      - --accesslog=true
+      - --ping=true
+      - --ping.entrypoint=web
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./data/traefik/logs:/var/log/traefik
+    networks:
+      - gitlab-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.example.com`)"
+      - "traefik.http.routers.traefik.entrypoints=web"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+
+  # 基本的Docker Registry服务
+  registry:
+    image: registry:2
+    platform: linux/arm64
+    container_name: registry
+    restart: always
+    networks:
+      - gitlab-network
+    environment:
+      - REGISTRY_STORAGE_DELETE_ENABLED=true
+    volumes:
+      - ./data/registry:/var/lib/registry
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.registry-api.rule=Host(`registry.example.com`) && PathPrefix(`/v2/`)"
+      - "traefik.http.routers.registry-api.entrypoints=web"
+      - "traefik.http.services.registry.loadbalancer.server.port=5000"
+
+  # 简单的Registry UI
+  registry-ui:
+    image: joxit/docker-registry-ui:latest
+    platform: linux/arm64
+    container_name: registry-ui
+    restart: always
+    networks:
+      - gitlab-network
+    environment:
+      - REGISTRY_TITLE=Docker Registry
+      - REGISTRY_URL=http://registry:5000
+      - DELETE_IMAGES=true
+      - SINGLE_REGISTRY=true
+      - SHOW_CONTENT_DIGEST=true
+    depends_on:
+      - registry
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.registry-ui.rule=Host(`registry.example.com`)"
+      - "traefik.http.routers.registry-ui.entrypoints=web"
+      - "traefik.http.services.registry-ui.loadbalancer.server.port=80"
+
+  # Hello World 应用 - 直接运行容器
+  hello-test-2:
+    image: hello-test-2
+    platform: linux/arm64
+    container_name: hello-test-2
+    restart: always
+    networks:
+      - gitlab-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hello-world.rule=Host(`hello.example.com`) || Host(`api.example.com`)"
+      - "traefik.http.routers.hello-world.entrypoints=web"
+      - "traefik.http.services.hello-world.loadbalancer.server.port=5000"
+
+networks:
+  gitlab-network:
+    driver: bridge
