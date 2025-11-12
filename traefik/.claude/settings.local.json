@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker network ls:*)",
+      "Bash(docker compose exec:*)",
+      "Bash(docker network inspect:*)",
+      "Bash(curl:*)",
+      "Bash(sudo:*)",
+      "Bash(lsof:*)",
+      "Bash(docker compose:*)",
+      "Bash(unset:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
